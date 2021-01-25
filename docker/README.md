@@ -1,0 +1,1 @@
+`docker run -ti --rm -p 9080:8080 -p 5984:5984 -p 8025:8025 -v $(pwd):/data/cozy-app/json-converter -v ~/docker/cozy.yaml:/etc/cozy/cozy.yaml cozy/cozy-app-dev`
