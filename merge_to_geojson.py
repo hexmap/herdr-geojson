@@ -22,9 +22,9 @@ polylines_feature_collection = {
 date_idx = 0
 last_date = None
 polyline = None
+# iterate over files containing individual points
 for fn in sorted(os.listdir(DATA_DIR)):
     fp = os.path.join(DATA_DIR, fn)
-
 
     if not fn.endswith('GEOLOCATION.json'):
         continue
@@ -32,15 +32,17 @@ for fn in sorted(os.listdir(DATA_DIR)):
     with open(fp, 'r') as json_f:
         data = json.load(json_f)
 
-        # generate polyline data by each day
         epoch = float(data['timestampEpoch']) / 1000
         dt = datetime.fromtimestamp(epoch)
+
+        ## Polyline
+        # create a new polyline feature by each day
         if not last_date or last_date != dt.date():
             if polyline:
-                polyline['properties']['endTimestamp'] = data['timestamp']
-                polyline_feature_collection.append(polyline)
+                polylines_feature_collection['features'].append(polyline)
 
             polyline = {
+                'type': 'Feature',
                 'geometry': {
                     'type': 'LineString',
                     'coordinates': []
@@ -52,12 +54,13 @@ for fn in sorted(os.listdir(DATA_DIR)):
                 }
             }
             last_date = dt.date()
-
-
+        polyline['properties']['endTimestamp'] = data['timestamp']
         polyline['geometry']['coordinates'].append([data['longitude'], data['latitude']])
 
-        # generate a point data for each file
+        ## Point
+        # generate a point data from each file
         point = {
+            'type': 'Feature',
             'geometry': {
                 'type': 'Point',
                 'coordinates': [data['longitude'], data['latitude']]
@@ -72,13 +75,14 @@ for fn in sorted(os.listdir(DATA_DIR)):
         }
         points_feature_collection['features'].append(point)
 
+# append last polyline before loop was terminated
 polylines_feature_collection['features'].append(polyline)
+
 
 
 # write output files
 with open('points.geojson', 'w') as geojson_points_f:
     json.dump(points_feature_collection, geojson_points_f)
-
 
 with open('polylines.geojson', 'w') as geojson_polylines_f:
     json.dump(polylines_feature_collection, geojson_polylines_f)
